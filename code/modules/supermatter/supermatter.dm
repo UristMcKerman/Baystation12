@@ -1,13 +1,9 @@
 
-#define NITROGEN_RETARDATION_FACTOR 4        //Higher == N2 slows reaction more
-#define THERMAL_RELEASE_MODIFIER 10                //Higher == less heat released during reaction
-#define PHORON_RELEASE_MODIFIER 1500                //Higher == less phoron released by reaction
-#define OXYGEN_RELEASE_MODIFIER 750        //Higher == less oxygen released at high temperature/power
-#define THERMAL_RELEASE_MODIFIER 750               //Higher == more heat released during reaction
-#define PLASMA_RELEASE_MODIFIER 1500                //Higher == less plasma released by reaction
-#define OXYGEN_RELEASE_MODIFIER 1500        //Higher == less oxygen released at high temperature/power
-#define REACTION_POWER_MODIFIER 1.1                //Higher == more overall power
-
+#define THERMAL_RELEASE_MODIFIER 20000		//Higher == more heat released during reaction
+#define SUPERMATTER_POWER_LOSS_RATE 0.0005
+#define REPAIR_TEMPERATURE_BOUND T0C+100
+#define STEFAN_BOLTZMANN_CONSTANT 0.0000000567
+#define RADIATION_OUTPUT_KOEFFICIENT 0.5
 
 //These would be what you would get at point blank, decreases with distance
 #define DETONATION_RADS 200
@@ -25,15 +21,20 @@
 	anchored = 0
 	luminosity = 4
 
-	var/gasefficency = 0.25
-
 	var/base_icon_state = "darkmatter"
+
+	var/inner_temperature = 293
+	var/inner_heatcapacity = 1000000	//With power==500 the temperature will increase by 10. ~6 minutes to warm up to melting point
+	var/inner_conductivity = 0.5 		//Should not exceed 1
+	var/surface = 0.5					//Used in black-body heat radiation
+
+	var/casing_melting = 3600	//Somewhere near tungsten melting point. Referred as T_cm in comment below
+	var/damage_buildup = 50		//How much damage will casing get for every T_cm above T_cm
 
 	var/damage = 0
 	var/damage_archived = 0
-	var/safe_alert = "Crystaline hyperstructure returning to safe operating levels."
-	var/warning_point = 100
-	var/warning_alert = "Danger! Crystal hyperstructure instability!"
+	var/warning_point = 0
+	var/warning_alert = "Danger! Crystal casing is melting! Structure is unstable!"
 	var/emergency_point = 700
 	var/emergency_alert = "CRYSTAL DELAMINATION IMMINENT."
 	var/explosion_point = 1000
@@ -49,9 +50,7 @@
 
 	//Temporary values so that we can optimize this
 	//How much the bullets damage should be multiplied by when it is added to the internal variables
-	var/config_bullet_energy = 2
-	//How much of the power is left after processing is finished?
-//        var/config_power_reduction_per_tick = 0.5
+	var/config_bullet_energy = 1
 	//How much hallucination should it produce per unit of power?
 	var/config_hallucination_power = 0.1
 
@@ -63,11 +62,14 @@
 		icon_state = "darkmatter_shard"
 		base_icon_state = "darkmatter_shard"
 
-		warning_point = 50
-		emergency_point = 500
-		explosion_point = 900
+		warning_point = 0
+		emergency_point = 300
+		explosion_point = 500	//Two times less tough
 
-		gasefficency = 0.125
+		surface = 0.125						//Used in black-body heat radiation
+		inner_heatcapacity = 200 * 12500	//Capacity of 12500 moles of toxins, or 150kg; enough for superdense crystal shard.
+		inner_conductivity = 0.3 			//Should not exceed 1
+		damage_buildup = 10					//Two times faster
 
 		explosion_power = 3 //3,6,9,12? Or is that too small?
 
@@ -82,11 +84,44 @@
 	. = ..()
 
 /obj/machinery/power/supermatter/proc/explode()
-		explosion(get_turf(src), explosion_power, explosion_power * 2, explosion_power * 3, explosion_power * 4, 1)
-		del src
-		return
+	for(var/mob/living/mob in living_mob_list)
+		if(istype(mob, /mob/living/carbon/human))
+			//Hilariously enough, running into a closet should make you get hit the hardest.
+			mob:hallucination += max(50, min(300, DETONATION_HALLUCINATION * sqrt(1 / (get_dist(mob, src) + 1)) ) )
+		var/rads = DETONATION_RADS * sqrt( 1 / (get_dist(mob, src) + 1) )
+		mob.apply_effect(rads, IRRADIATE)
+
+	explosion(get_turf(src), explosion_power, explosion_power * 2, explosion_power * 3, explosion_power * 4, 1)
+	del src
+	return
+
+/obj/machinery/power/supermatter/proc/calc_stability()
+	return num2text(round((1 - damage / explosion_point) * 100))
 
 /obj/machinery/power/supermatter/process()
+	inner_temperature += THERMAL_RELEASE_MODIFIER * power / inner_heatcapacity
+	if (inner_temperature > casing_melting)
+		damage += (inner_temperature / casing_melting - 1) * damage_buildup
+
+	if(damage > warning_point) // while the core is still damaged and it's still worth noting its status
+		if((world.timeofday - lastwarning) / 10 >= WARNING_DELAY)
+			var/stability = calc_stability()
+			if(damage > emergency_point)
+				radio.autosay(addtext(emergency_alert, " Casing status: ",stability,"%"), "Supermatter Monitor")
+				lastwarning = world.timeofday
+
+			else if(damage > damage_archived) // The damage is still going up
+				radio.autosay(addtext(warning_alert," Casing status: ",stability,"%"), "Supermatter Monitor")
+				lastwarning = world.timeofday - 150
+				damage_archived = damage
+
+		if(damage > explosion_point)
+			explode()
+			return
+
+
+	transfer_energy()
+	power *= (1.0 - SUPERMATTER_POWER_LOSS_RATE)
 
 	var/turf/L = loc
 
@@ -96,117 +131,43 @@
 	if(!istype(L)) 	//We are in a crate or somewhere that isn't turf, if we return to turf resume processing but for now.
 		return  //Yeah just stop.
 
-	if(istype(L, /turf/space))	// Stop processing this stuff if we've been ejected.
+	if(istype(L, /turf/space))
+		radiate_heat()
 		return
 
-	if(damage > warning_point) // while the core is still damaged and it's still worth noting its status
-		if((world.timeofday - lastwarning) / 10 >= WARNING_DELAY)
-			var/stability = num2text(round((damage / explosion_point) * 100))
-
-			if(damage > emergency_point)
-
-				radio.autosay(addtext(emergency_alert, " Instability: ",stability,"%"), "Supermatter Monitor")
-				lastwarning = world.timeofday
-
-			else if(damage >= damage_archived) // The damage is still going up
-				radio.autosay(addtext(warning_alert," Instability: ",stability,"%"), "Supermatter Monitor")
-				lastwarning = world.timeofday - 150
-
-			else                                                 // Phew, we're safe
-				radio.autosay(safe_alert, "Supermatter Monitor")
-				lastwarning = world.timeofday
-
-		if(damage > explosion_point)
-			for(var/mob/living/mob in living_mob_list)
-				if(istype(mob, /mob/living/carbon/human))
-					//Hilariously enough, running into a closet should make you get hit the hardest.
-					mob:hallucination += max(50, min(300, DETONATION_HALLUCINATION * sqrt(1 / (get_dist(mob, src) + 1)) ) )
-				var/rads = DETONATION_RADS * sqrt( 1 / (get_dist(mob, src) + 1) )
-				mob.apply_effect(rads, IRRADIATE)
-
-			explode()
-
-	//Ok, get the air from the turf
 	var/datum/gas_mixture/env = L.return_air()
+	var/datum/gas_mixture/removed = env.remove(env.total_moles)
 
-	//Remove gas from surrounding area
-	var/datum/gas_mixture/removed = env.remove(gasefficency * env.total_moles)
+	if (removed)
+		var/air_heatcapacity = removed.heat_capacity()
+		var/temp_heatcapacity = air_heatcapacity*inner_heatcapacity/(air_heatcapacity+inner_heatcapacity)
+		var/heat = (inner_temperature - removed.temperature) * inner_conductivity * temp_heatcapacity
+		inner_temperature -= heat / inner_heatcapacity
+		removed.temperature += (heat / max(1, removed.heat_capacity()))
+		removed.temperature = max(0, min(removed.temperature, 1000000))
+		removed.update_values()
 
-	if(!removed || !removed.total_moles)
-		damage += max((power-1600)/10, 0)
-		power = min(power, 1600)
-		return 1
-
-	if (!removed)
-		return 1
-
-	damage_archived = damage
-	damage = max( damage + ( (removed.temperature - 800) / 150 ) , 0 )
-	//Ok, 100% oxygen atmosphere = best reaction
-	//Maxes out at 100% oxygen pressure
-	oxygen = max(min((removed.oxygen - (removed.nitrogen * NITROGEN_RETARDATION_FACTOR)) / MOLES_CELLSTANDARD, 1), 0)
-
-	var/temp_factor = 100
-
-	if(oxygen > 0.8)
-		// with a perfect gas mix, make the power less based on heat
-		icon_state = "[base_icon_state]_glow"
-	else
-		// in normal mode, base the produced energy around the heat
-		temp_factor = 60
-		icon_state = base_icon_state
-
-	power = max( (removed.temperature * temp_factor / T0C) * oxygen + power, 0) //Total laser power plus an overload
-
-	//We've generated power, now let's transfer it to the collectors for storing/usage
-	transfer_energy()
-
-	var/device_energy = power * REACTION_POWER_MODIFIER
-
-	//To figure out how much temperature to add each tick, consider that at one atmosphere's worth
-	//of pure oxygen, with all four lasers firing at standard energy and no N2 present, at room temperature
-	//that the device energy is around 2140. At that stage, we don't want too much heat to be put out
-	//Since the core is effectively "cold"
-
-	//Also keep in mind we are only adding this temperature to (efficiency)% of the one tile the rock
-	//is on. An increase of 4*C @ 25% efficiency here results in an increase of 1*C / (#tilesincore) overall.
-	
-	var/thermal_power = THERMAL_RELEASE_MODIFIER
-	if(removed.total_moles < 35) thermal_power += 750   //If you don't add coolant, you are going to have a bad time.
-
-	removed.temperature += ((device_energy * thermal_power) / max(1, removed.heat_capacity()))
-
-	removed.temperature = max(0, min(removed.temperature, 10000))
-
-	//Calculate how much gas to release
-	removed.phoron += max(device_energy / PHORON_RELEASE_MODIFIER, 0)
-
-	removed.oxygen += max((device_energy + removed.temperature - T0C) / OXYGEN_RELEASE_MODIFIER, 0)
-
-	removed.update_values()
-
-	env.merge(removed)
+/*		var/datum/gas_mixture/released = new
+		released.toxins = max(power * PLASMA_RELEASE_MODIFIER, 0)
+		released.oxygen = max(power * OXYGEN_RELEASE_MODIFIER, 0)
+		released.temperature = inner_temperature
+		released.update_values()
+		removed.merge(released)
+*/
+		env.merge(removed)
 
 	for(var/mob/living/carbon/human/l in view(src, min(7, round(power ** 0.25)))) // If they can see it without mesons on.  Bad on them.
 		if(!istype(l.glasses, /obj/item/clothing/glasses/meson))
 			l.hallucination = max(0, min(200, l.hallucination + power * config_hallucination_power * sqrt( 1 / max(1,get_dist(l, src)) ) ) )
 
-	for(var/mob/living/l in range(src, round((power / 100) ** 0.25)))
+	for(var/mob/living/l in range(src, round((power / 100) ** 0.25)))	//TODO: EASYMOD formula, must be discussed. Core will irradiate people in 3 tiles away only if it has 4k power
 		var/rads = (power / 10) * sqrt( 1 / get_dist(l, src) )
 		l.apply_effect(rads, IRRADIATE)
-
-	power -= (power/500)**3
 
 	return 1
 
 
 /obj/machinery/power/supermatter/bullet_act(var/obj/item/projectile/Proj)
-	var/turf/L = loc
-	if(!istype(L))		// We don't run process() when we are in space
-		return 0	// This stops people from being able to really power up the supermatter
-				// Then bring it inside to explode instantly upon landing on a valid turf.
-
-
 	if(Proj.flag != "bullet")
 		power += Proj.damage * config_bullet_energy
 	else
@@ -222,26 +183,42 @@
 	if(Adjacent(user))
 		return attack_hand(user)
 	else
-		user << "<span class = \"warning\">You attempt to interface with the control circuits but find they are not connected to your network.  Maybe in a future firmware update.</span>"
+		var/stability = calc_stability()
+		user << "<span class = \"warning\">Supermatter monitor data:<br> Crystal temperature: [inner_temperature]<br> Casing integrity: [stability]</span>"
 	return
 
 /obj/machinery/power/supermatter/attack_ai(mob/user as mob)
-	user << "<span class = \"warning\">You attempt to interface with the control circuits but find they are not connected to your network.  Maybe in a future firmware update.</span>"
+		var/stability = calc_stability()
+		user << "<span class = \"warning\">Supermatter monitor data:<br> Crystal temperature: [inner_temperature]<br> Casing integrity: [stability]</span>"
 
 /obj/machinery/power/supermatter/attack_hand(mob/user as mob)
 	user.visible_message("<span class=\"warning\">\The [user] reaches out and touches \the [src], inducing a resonance... \his body starts to glow and bursts into flames before flashing into ash.</span>",\
 		"<span class=\"danger\">You reach out and touch \the [src]. Everything starts burning and all you can hear is ringing. Your last thought is \"That was not a wise decision.\"</span>",\
 		"<span class=\"warning\">You hear an uneartly ringing, then what sounds like a shrilling kettle as you are washed with a wave of heat.</span>")
-
 	Consume(user)
 
 /obj/machinery/power/supermatter/proc/transfer_energy()
 	for(var/obj/machinery/power/rad_collector/R in rad_collectors)
 		if(get_dist(R, src) <= 15) // Better than using orange() every process
-			R.receive_pulse(power)
+			R.receive_pulse(power * RADIATION_OUTPUT_KOEFFICIENT)
 	return
 
+/obj/machinery/power/supermatter/proc/radiate_heat()
+	var/heat = STEFAN_BOLTZMANN_CONSTANT * surface * inner_temperature ** 4
+	inner_temperature = max(0, inner_temperature - heat / inner_heatcapacity)
+
 /obj/machinery/power/supermatter/attackby(obj/item/weapon/W as obj, mob/living/user as mob)
+	if (istype(W,/obj/item/device/analyzer))
+		var/stability = calc_stability()
+		user << "[W.icon]\blue You analyze supermatter core status:<br> Crystal temperature: [inner_temperature]<br> Casing integrity: [stability]"
+		return
+	else if (istype(W,/obj/item/stack/nanopaste) && damage > 0 && inner_temperature <= REPAIR_TEMPERATURE_BOUND)
+		user << "\blue You fix core casing with nanopaste. Now it looks better."
+		var/obj/item/stack/nanopaste/NP = W
+		NP.use(1)
+		damage = max(0, damage - 100)
+		return
+
 	user.visible_message("<span class=\"warning\">\The [user] touches \a [W] to \the [src] as a silence fills the room...</span>",\
 		"<span class=\"danger\">You touch \the [W] to \the [src] when everything suddenly goes silent.\"</span>\n<span class=\"notice\">\The [W] flashes into dust as you flinch away from \the [src].</span>",\
 		"<span class=\"warning\">Everything suddenly goes silent.</span>")
@@ -282,4 +259,3 @@
 			l.show_message("<span class=\"warning\">You hear an uneartly ringing and notice your skin is covered in fresh radiation burns.</span>", 2)
 		var/rads = 500 * sqrt( 1 / (get_dist(l, src) + 1) )
 		l.apply_effect(rads, IRRADIATE)
-
