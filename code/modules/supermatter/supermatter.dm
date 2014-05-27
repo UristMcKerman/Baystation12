@@ -4,6 +4,7 @@
 #define REPAIR_TEMPERATURE_BOUND T0C+100
 #define STEFAN_BOLTZMANN_CONSTANT 0.0000000567
 #define RADIATION_OUTPUT_KOEFFICIENT 0.5
+#define RADIATION_ORGANIC_KOEFFICIENT 0.1
 
 //These would be what you would get at point blank, decreases with distance
 #define DETONATION_RADS 200
@@ -119,14 +120,12 @@
 			explode()
 			return
 
-
 	transfer_energy()
 	power *= (1.0 - SUPERMATTER_POWER_LOSS_RATE)
 
-	var/turf/L = loc
+	apply_bad_effects()
 
-	if(isnull(L))		// We have a null turf...something is wrong, stop processing this entity.
-		return PROCESS_KILL
+	var/turf/L = loc
 
 	if(!istype(L)) 	//We are in a crate or somewhere that isn't turf, if we return to turf resume processing but for now.
 		return  //Yeah just stop.
@@ -147,22 +146,7 @@
 		removed.temperature = max(0, min(removed.temperature, 1000000))
 		removed.update_values()
 
-/*		var/datum/gas_mixture/released = new
-		released.toxins = max(power * PLASMA_RELEASE_MODIFIER, 0)
-		released.oxygen = max(power * OXYGEN_RELEASE_MODIFIER, 0)
-		released.temperature = inner_temperature
-		released.update_values()
-		removed.merge(released)
-*/
 		env.merge(removed)
-
-	for(var/mob/living/carbon/human/l in view(src, min(7, round(power ** 0.25)))) // If they can see it without mesons on.  Bad on them.
-		if(!istype(l.glasses, /obj/item/clothing/glasses/meson))
-			l.hallucination = max(0, min(200, l.hallucination + power * config_hallucination_power * sqrt( 1 / max(1,get_dist(l, src)) ) ) )
-
-	for(var/mob/living/l in range(src, round((power / 100) ** 0.25)))	//TODO: EASYMOD formula, must be discussed. Core will irradiate people in 3 tiles away only if it has 4k power
-		var/rads = (power / 10) * sqrt( 1 / get_dist(l, src) )
-		l.apply_effect(rads, IRRADIATE)
 
 	return 1
 
@@ -201,7 +185,18 @@
 	for(var/obj/machinery/power/rad_collector/R in rad_collectors)
 		if(get_dist(R, src) <= 15) // Better than using orange() every process
 			R.receive_pulse(power * RADIATION_OUTPUT_KOEFFICIENT)
+			//TODO: Radiation collectors will collect full radiation even through walls. Should be discussed.
 	return
+
+/obj/machinery/power/supermatter/proc/apply_bad_effects()
+	for(var/mob/living/carbon/human/l in view(src, 7)) // If they can see it without mesons on.  Bad on them.
+		if(!istype(l.glasses, /obj/item/clothing/glasses/meson))
+			l.hallucination = max(0, min(200, l.hallucination + power * config_hallucination_power * sqrt( 1 / max(1,get_dist(l, src)) ) ) )
+
+	var/rad_dist = (power * RADIATION_ORGANIC_KOEFFICIENT) ** 0.5
+	for(var/mob/living/l in view(src, rad_dist))
+		var/rads = (power * RADIATION_ORGANIC_KOEFFICIENT) * (1 / get_dist(l, src))**2
+		l.apply_effect(rads, IRRADIATE)
 
 /obj/machinery/power/supermatter/proc/radiate_heat()
 	var/heat = STEFAN_BOLTZMANN_CONSTANT * surface * inner_temperature ** 4
