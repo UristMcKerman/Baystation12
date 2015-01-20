@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+#define STEFAN_BOLTZMANN_CONSTANT 0.0000000567
+>>>>>>> master
 
 datum/pipeline
 	var/datum/gas_mixture/air
@@ -199,6 +203,7 @@ datum/pipeline
 				air.temperature -= heat/total_heat_capacity
 		if(network)
 			network.update = 1
+<<<<<<< HEAD
 
 	//surface must be the surface area in m^2
 	proc/radiate_heat_to_space(surface, thermal_conductivity)
@@ -209,5 +214,12 @@ datum/pipeline
 		var/heat_gain = surface*(AVERAGE_SOLAR_RADIATION - STEFAN_BOLTZMANN_CONSTANT*thermal_conductivity*(air.temperature - COSMIC_RADIATION_TEMPERATURE) ** 4)
 		
 		air.add_thermal_energy(heat_gain)
+=======
+			
+	proc/radiate_heat(surface, thermal_conductivity)
+		var/total_heat_capacity = air.heat_capacity()
+		var/heat = STEFAN_BOLTZMANN_CONSTANT * surface * air.temperature ** 4 * thermal_conductivity
+		air.temperature = max(0, air.temperature - heat / total_heat_capacity)
+>>>>>>> master
 		if(network)
 			network.update = 1
