@@ -48,6 +48,8 @@
 /obj/item/weapon/storage/box/gloves
 	name = "box of latex gloves"
 	desc = "Contains white gloves."
+	icon_state = "latex"
+
 	New()
 		..()
 		new /obj/item/clothing/gloves/latex(src)
@@ -77,7 +79,6 @@
 /obj/item/weapon/storage/box/syringes
 	name = "box of syringes"
 	desc = "A box full of syringes."
-	desc = "A biohazard alert warning is printed on the box"
 	icon_state = "syringe"
 
 	New()
@@ -89,6 +90,22 @@
 		new /obj/item/weapon/reagent_containers/syringe( src )
 		new /obj/item/weapon/reagent_containers/syringe( src )
 		new /obj/item/weapon/reagent_containers/syringe( src )
+
+/obj/item/weapon/storage/box/syringegun
+	name = "box of syringe gun cartridges"
+	desc = "A box full of compressed gas cartridges."
+	icon_state = "syringe"
+
+	New()
+		..()
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+		new /obj/item/weapon/syringe_cartridge( src )
+
 
 /obj/item/weapon/storage/box/beakers
 	name = "box of beakers"
@@ -146,6 +163,76 @@
 		new /obj/item/ammo_casing/shotgun/beanbag(src)
 		new /obj/item/ammo_casing/shotgun/beanbag(src)
 
+/obj/item/weapon/storage/box/shotgunammo
+	name = "box of shotgun slugs"
+	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+		new /obj/item/ammo_casing/shotgun(src)
+
+/obj/item/weapon/storage/box/shotgunshells
+	name = "box of shotgun shells"
+	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+		new /obj/item/ammo_casing/shotgun/pellet(src)
+
+/obj/item/weapon/storage/box/flashshells
+	name = "box of illumination shells"
+	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+		new /obj/item/ammo_casing/shotgun/flash(src)
+
+/obj/item/weapon/storage/box/stunshells
+	name = "box of stun shells"
+	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+
+	New()
+		..()
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+		new /obj/item/ammo_casing/shotgun/stunshell(src)
+
+/obj/item/weapon/storage/box/sniperammo
+	name = "box of 14.5mm shells"
+	desc = "It has a picture of a gun and several warning symbols on the front.<br>WARNING: Live ammunition. Misuse may result in serious injury or death."
+
+	New()
+		..()
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+		new /obj/item/ammo_casing/a145(src)
+
 /obj/item/weapon/storage/box/flashbangs
 	name = "box of flashbangs (WARNING)"
 	desc = "<B>WARNING: These devices are extremely dangerous and can cause blindness or deafness in repeated use.</B>"
@@ -163,7 +250,7 @@
 
 /obj/item/weapon/storage/box/emps
 	name = "box of emp grenades"
-	desc = "A box with 5 emp grenades."
+	desc = "A box containing 5 military grade EMP grenades.<br> WARNING: Do not use near unshielded electronics or biomechanical augmentations, death or permanent paralysis may occur."
 	icon_state = "flashbang"
 
 	New()
@@ -236,7 +323,7 @@
 		new /obj/item/weapon/reagent_containers/food/drinks/drinkingglass(src)
 
 /obj/item/weapon/storage/box/cdeathalarm_kit
-	name = "Death Alarm Kit"
+	name = "death alarm kit"
 	desc = "Box of stuff used to implant death alarms."
 	icon_state = "implant"
 	item_state = "syringe_kit"
@@ -294,13 +381,27 @@
 		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket(src)
 		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket(src)
 
+/obj/item/weapon/storage/box/sinpockets
+	name = "box of sin-pockets"
+	desc = "<B>Instructions:</B> <I>Crush bottom of package to initiate chemical heating. Wait for 20 seconds before consumption. Product will cool if not eaten within seven minutes.</I>"
+	icon_state = "donk_kit"
+
+	New()
+		..()
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+		new /obj/item/weapon/reagent_containers/food/snacks/donkpocket/sinpocket(src)
+
 /obj/item/weapon/storage/box/monkeycubes
 	name = "monkey cube box"
 	desc = "Drymate brand monkey cubes. Just add water!"
 	icon = 'icons/obj/food.dmi'
 	icon_state = "monkeycubebox"
 	storage_slots = 7
-	can_hold = list("/obj/item/weapon/reagent_containers/food/snacks/monkeycube")
+	can_hold = list(/obj/item/weapon/reagent_containers/food/snacks/monkeycube)
 	New()
 		..()
 		if(src.type == /obj/item/weapon/storage/box/monkeycubes)
@@ -381,7 +482,7 @@
 
 /obj/item/weapon/storage/box/mousetraps
 	name = "box of Pest-B-Gon mousetraps"
-	desc = "<B><FONT=red>WARNING:</FONT></B> <I>Keep out of reach of children</I>."
+	desc = "<B><FONT color='red'>WARNING:</FONT></B> <I>Keep out of reach of children</I>."
 	icon_state = "mousetraps"
 
 	New()
@@ -414,7 +515,7 @@
 	icon = 'icons/obj/toy.dmi'
 	icon_state = "spbox"
 	storage_slots = 8
-	can_hold = list("/obj/item/toy/snappop")
+	can_hold = list(/obj/item/toy/snappop)
 	New()
 		..()
 		for(var/i=1; i <= storage_slots; i++)
@@ -428,16 +529,15 @@
 	item_state = "zippo"
 	storage_slots = 10
 	w_class = 1
-	flags = TABLEPASS
 	slot_flags = SLOT_BELT
-	can_hold = list("/obj/item/weapon/match")
+	can_hold = list(/obj/item/weapon/flame/match)
 
 	New()
 		..()
 		for(var/i=1; i <= storage_slots; i++)
-			new /obj/item/weapon/match(src)
+			new /obj/item/weapon/flame/match(src)
 
-	attackby(obj/item/weapon/match/W as obj, mob/user as mob)
+	attackby(obj/item/weapon/flame/match/W as obj, mob/user as mob)
 		if(istype(W) && !W.lit && !W.burnt)
 			W.lit = 1
 			W.damtype = "burn"
@@ -463,8 +563,8 @@
 	item_state = "syringe_kit"
 	foldable = /obj/item/stack/sheet/cardboard //BubbleWrap
 	storage_slots=21
-	can_hold = list("/obj/item/weapon/light/tube", "/obj/item/weapon/light/bulb")
-	max_combined_w_class = 21
+	can_hold = list(/obj/item/weapon/light/tube, /obj/item/weapon/light/bulb)
+	max_combined_w_class = 42	//holds 21 items of w_class 2
 	use_to_pickup = 1 // for picking up broken bulbs, not that most people will try
 
 /obj/item/weapon/storage/box/lights/bulbs/New()

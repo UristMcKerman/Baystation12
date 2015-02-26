@@ -1,6 +1,6 @@
 /obj/machinery/computer/arcade
 	name = "arcade machine"
-	desc = "Does not support Pin ball."
+	desc = "Does not support pinball."
 	icon = 'icons/obj/computer.dmi'
 	icon_state = "arcade"
 	circuit = "/obj/item/weapon/circuitboard/arcade"
@@ -32,7 +32,10 @@
 							/obj/item/toy/prize/mauler						= 1,
 							/obj/item/toy/prize/odysseus					= 1,
 							/obj/item/toy/prize/phazon						= 1,
-							/obj/item/toy/waterflower						= 1
+							/obj/item/toy/waterflower						= 1,
+							/obj/item/toy/figure							= 1,
+							/obj/random/plushie								= 1,
+							/obj/item/toy/cultsword							= 1
 							)
 
 /obj/machinery/computer/arcade
@@ -54,9 +57,6 @@
 
 
 /obj/machinery/computer/arcade/attack_ai(mob/user as mob)
-	return src.attack_hand(user)
-
-/obj/machinery/computer/arcade/attack_paw(mob/user as mob)
 	return src.attack_hand(user)
 
 /obj/machinery/computer/arcade/attack_hand(mob/user as mob)
@@ -84,7 +84,7 @@
 
 /obj/machinery/computer/arcade/Topic(href, href_list)
 	if(..())
-		return
+		return 1
 
 	if (!src.blocked && !src.gameover)
 		if (href_list["attack"])
@@ -238,27 +238,10 @@
 
 
 		src.updateUsrDialog()
-	else if(istype(I, /obj/item/weapon/screwdriver))
-		playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
-		if(do_after(user, 20))
-			var/obj/structure/computerframe/A = new /obj/structure/computerframe( src.loc )
-			var/obj/item/weapon/circuitboard/arcade/M = new /obj/item/weapon/circuitboard/arcade( A )
-			for (var/obj/C in src)
-				C.loc = src.loc
-			A.circuit = M
-			A.anchored = 1
+	else
+		..()
 
-			if (src.stat & BROKEN)
-				user << "\blue The broken glass falls out."
-				new /obj/item/weapon/shard( src.loc )
-				A.state = 3
-				A.icon_state = "3"
-			else
-				user << "\blue You disconnect the monitor."
-				A.state = 4
-				A.icon_state = "4"
 
-			del(src)
 /obj/machinery/computer/arcade/emp_act(severity)
 	if(stat & (NOPOWER|BROKEN))
 		..(severity)

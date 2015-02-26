@@ -3,7 +3,7 @@
 	desc = "Should anything ever go wrong..."
 	icon = 'icons/obj/items.dmi'
 	icon_state = "red_phone"
-	flags = FPRINT | TABLEPASS | CONDUCT
+	flags = CONDUCT
 	force = 3.0
 	throwforce = 2.0
 	throw_speed = 1
@@ -20,32 +20,9 @@
 	opacity = 0
 	density = 0
 	anchored = 0.0
-	var/matter = 0
+	var/stored_matter = 0
 	var/mode = 1
-	flags = TABLEPASS
 	w_class = 3.0
-
-/obj/item/weapon/bananapeel
-	name = "banana peel"
-	desc = "A peel from a banana."
-	icon = 'icons/obj/items.dmi'
-	icon_state = "banana_peel"
-	item_state = "banana_peel"
-	w_class = 2.0
-	throwforce = 0
-	throw_speed = 4
-	throw_range = 20
-
-/obj/item/weapon/corncob
-	name = "corn cob"
-	desc = "A reminder of meals gone by."
-	icon = 'icons/obj/harvest.dmi'
-	icon_state = "corncob"
-	item_state = "corncob"
-	w_class = 2.0
-	throwforce = 0
-	throw_speed = 4
-	throw_range = 20
 
 /obj/item/weapon/soap
 	name = "soap"
@@ -63,8 +40,10 @@
 	icon_state = "soapnt"
 
 /obj/item/weapon/soap/deluxe
-	desc = "A deluxe Waffle Co. brand bar of soap. Smells of condoms."
 	icon_state = "soapdeluxe"
+
+/obj/item/weapon/soap/deluxe/New()
+	desc = "A deluxe Waffle Co. brand bar of soap. Smells of [pick("lavender", "vanilla", "strawberry", "chocolate" ,"space")]."
 
 /obj/item/weapon/soap/syndie
 	desc = "An untrustworthy bar of soap. Smells of fear."
@@ -77,7 +56,7 @@
 	icon_state = "bike_horn"
 	item_state = "bike_horn"
 	throwforce = 3
-	w_class = 1.0
+	w_class = 2
 	throw_speed = 3
 	throw_range = 15
 	attack_verb = list("HONKED")
@@ -94,19 +73,58 @@
 	throw_speed = 4
 	throw_range = 5
 
-
 /obj/item/weapon/cane
 	name = "cane"
 	desc = "A cane used by a true gentlemen. Or a clown."
 	icon = 'icons/obj/weapons.dmi'
 	icon_state = "cane"
 	item_state = "stick"
-	flags = FPRINT | TABLEPASS| CONDUCT
+	flags = CONDUCT
 	force = 5.0
 	throwforce = 7.0
 	w_class = 2.0
-	m_amt = 50
+	matter = list("metal" = 50)
 	attack_verb = list("bludgeoned", "whacked", "disciplined", "thrashed")
+
+/obj/item/weapon/cane/concealed
+	var/concealed_blade
+
+/obj/item/weapon/cane/concealed/New()
+	..()
+	concealed_blade = new/obj/item/weapon/butterfly/switchblade(src)
+
+/obj/item/weapon/cane/concealed/attack_self(mob/user)
+	if(concealed_blade)
+		user.visible_message("<span class='warning'>[user] has unsheathed \a [concealed_blade] from \his [src]!</span>", "You unsheathe \the [concealed_blade] from \the [src].")
+		// Calling drop/put in hands to properly call item drop/pickup procs
+		playsound(user.loc, 'sound/weapons/flipblade.ogg', 50, 1)
+		user.drop_from_inventory(src)
+		user.put_in_hands(concealed_blade)
+		user.put_in_hands(src)
+		concealed_blade = null
+		update_icon()
+	else
+		..()
+
+/obj/item/weapon/cane/concealed/attackby(var/obj/item/weapon/butterfly/W, var/mob/user)
+	if(!src.concealed_blade && istype(W))
+		user.visible_message("<span class='warning'>[user] has sheathed \a [W] into \his [src]!</span>", "You sheathe \the [W] into \the [src].")
+		user.drop_from_inventory(W)
+		W.loc = src
+		src.concealed_blade = W
+		update_icon()
+	else
+		..()
+
+/obj/item/weapon/cane/concealed/update_icon()
+	if(concealed_blade)
+		name = initial(name)
+		icon_state = initial(icon_state)
+		item_state = initial(icon_state)
+	else
+		name = "cane shaft"
+		icon_state = "nullrod"
+		item_state = "foldcane"
 
 /obj/item/weapon/disk
 	name = "disk"
@@ -148,7 +166,7 @@
 	gender = PLURAL
 	icon = 'icons/obj/items.dmi'
 	icon_state = "handcuff"
-	flags = FPRINT | TABLEPASS | CONDUCT
+	flags = CONDUCT
 	throwforce = 0
 	w_class = 3.0
 	origin_tech = "materials=1"
@@ -173,7 +191,7 @@
 		icon_state = "beartrap[armed]"
 		user << "<span class='notice'>[src] is now [armed ? "armed" : "disarmed"]</span>"
 
-/obj/item/weapon/legcuffs/beartrap/HasEntered(AM as mob|obj)
+/obj/item/weapon/legcuffs/beartrap/Crossed(AM as mob|obj)
 	if(armed)
 		if(ishuman(AM))
 			if(isturf(src.loc))
@@ -207,43 +225,12 @@
 	throw_speed = 1
 	throw_range = 5
 	w_class = 2.0
-	flags = FPRINT | TABLEPASS
 	attack_verb = list("warned", "cautioned", "smashed")
 
 /obj/item/weapon/caution/cone
 	desc = "This cone is trying to warn you of something!"
 	name = "warning cone"
 	icon_state = "cone"
-
-/obj/item/weapon/rack_parts
-	name = "rack parts"
-	desc = "Parts of a rack."
-	icon = 'icons/obj/items.dmi'
-	icon_state = "rack_parts"
-	flags = FPRINT | TABLEPASS| CONDUCT
-	m_amt = 3750
-
-/obj/item/weapon/shard
-	name = "shard"
-	icon = 'icons/obj/shards.dmi'
-	icon_state = "large"
-	sharp = 1
-	desc = "Could probably be used as ... a throwing weapon?"
-	w_class = 2.0
-	force = 5.0
-	throwforce = 8.0
-	item_state = "shard-glass"
-	g_amt = 3750
-	attack_verb = list("stabbed", "slashed", "sliced", "cut")
-
-	suicide_act(mob/user)
-		viewers(user) << pick("\red <b>[user] is slitting \his wrists with the shard of glass! It looks like \he's trying to commit suicide.</b>", \
-							"\red <b>[user] is slitting \his throat with the shard of glass! It looks like \he's trying to commit suicide.</b>")
-		return (BRUTELOSS)
-
-/obj/item/weapon/shard/attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob)
-	playsound(loc, 'sound/weapons/bladeslice.ogg', 50, 1, -1)
-	return ..()
 
 /*/obj/item/weapon/syndicate_uplink
 	name = "station bounced radio"
@@ -256,35 +243,13 @@
 	var/traitor_frequency = 0.0
 	var/mob/currentUser = null
 	var/obj/item/device/radio/origradio = null
-	flags = FPRINT | TABLEPASS | CONDUCT | ONBELT
+	flags = CONDUCT | ONBELT
 	w_class = 2.0
 	item_state = "radio"
 	throw_speed = 4
 	throw_range = 20
-	m_amt = 100
+	matter = list("metal" = 100
 	origin_tech = "magnets=2;syndicate=3"*/
-
-/obj/item/weapon/shard/shrapnel
-	name = "shrapnel"
-	icon = 'icons/obj/shards.dmi'
-	icon_state = "shrapnellarge"
-	desc = "A bunch of tiny bits of shattered metal."
-
-/obj/item/weapon/shard/shrapnel/New()
-
-	src.icon_state = pick("shrapnellarge", "shrapnelmedium", "shrapnelsmall")
-	switch(src.icon_state)
-		if("shrapnelsmall")
-			src.pixel_x = rand(-12, 12)
-			src.pixel_y = rand(-12, 12)
-		if("shrapnelmedium")
-			src.pixel_x = rand(-8, 8)
-			src.pixel_y = rand(-8, 8)
-		if("shrapnellarge")
-			src.pixel_x = rand(-5, 5)
-			src.pixel_y = rand(-5, 5)
-		else
-	return
 
 /obj/item/weapon/SWF_uplink
 	name = "station-bounced radio"
@@ -296,14 +261,14 @@
 	var/selfdestruct = 0.0
 	var/traitor_frequency = 0.0
 	var/obj/item/device/radio/origradio = null
-	flags = FPRINT | TABLEPASS| CONDUCT
+	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	item_state = "radio"
 	throwforce = 5
 	w_class = 2.0
 	throw_speed = 4
 	throw_range = 20
-	m_amt = 100
+	matter = list("metal" = 100)
 	origin_tech = "magnets=1"
 
 /obj/item/weapon/staff
@@ -316,7 +281,7 @@
 	throw_speed = 1
 	throw_range = 5
 	w_class = 2.0
-	flags = FPRINT | TABLEPASS | NOSHIELD
+	flags = NOSHIELD
 	attack_verb = list("bludgeoned", "whacked", "disciplined")
 
 /obj/item/weapon/staff/broom
@@ -343,31 +308,7 @@
 	throw_speed = 1
 	throw_range = 5
 	w_class = 2.0
-	flags = FPRINT | TABLEPASS | NOSHIELD
-
-/obj/item/weapon/table_parts
-	name = "table parts"
-	desc = "Parts of a table. Poor table."
-	gender = PLURAL
-	icon = 'icons/obj/items.dmi'
-	icon_state = "table_parts"
-	m_amt = 3750
-	flags = FPRINT | TABLEPASS| CONDUCT
-	attack_verb = list("slammed", "bashed", "battered", "bludgeoned", "thrashed", "whacked")
-
-/obj/item/weapon/table_parts/reinforced
-	name = "reinforced table parts"
-	desc = "Hard table parts. Well...harder..."
-	icon = 'icons/obj/items.dmi'
-	icon_state = "reinf_tableparts"
-	m_amt = 7500
-	flags = FPRINT | TABLEPASS| CONDUCT
-
-/obj/item/weapon/table_parts/wood
-	name = "wooden table parts"
-	desc = "Keep away from fire."
-	icon_state = "wood_tableparts"
-	flags = null
+	flags = NOSHIELD
 
 /obj/item/weapon/wire
 	desc = "This is just a simple piece of regular insulated wire."
@@ -377,7 +318,7 @@
 	var/amount = 1.0
 	var/laying = 0.0
 	var/old_lay = null
-	m_amt = 40
+	matter = list("metal" = 40)
 	attack_verb = list("whipped", "lashed", "disciplined", "tickled")
 
 	suicide_act(mob/user)
@@ -389,7 +330,7 @@
 	icon_state = "std_module"
 	w_class = 2.0
 	item_state = "electronic"
-	flags = FPRINT|TABLEPASS|CONDUCT
+	flags = CONDUCT
 	var/mtype = 1						// 1=electronic 2=hardware
 
 /obj/item/weapon/module/card_reader
@@ -401,8 +342,14 @@
 	name = "power control module"
 	icon_state = "power_mod"
 	desc = "Heavy-duty switching circuits for power control."
-	m_amt = 50
-	g_amt = 50
+	matter = list("metal" = 50, "glass" = 50)
+
+/obj/item/weapon/module/power_control/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+	if (istype(W, /obj/item/device/multitool))
+		var/obj/item/weapon/circuitboard/ghettosmes/newcircuit = new/obj/item/weapon/circuitboard/ghettosmes(user.loc)
+		del(src)
+		user.put_in_hands(newcircuit)
+
 
 /obj/item/weapon/module/id_auth
 	name = "\improper ID authentication module"
@@ -431,7 +378,7 @@
 
 /obj/item/weapon/camera_bug/attack_self(mob/usr as mob)
 	var/list/cameras = new/list()
-	for (var/obj/machinery/camera/C in cameranet.viewpoints)
+	for (var/obj/machinery/camera/C in cameranet.cameras)
 		if (C.bugged && C.status)
 			cameras.Add(C)
 	if (length(cameras) == 0)
@@ -454,64 +401,6 @@
 
 	usr.client.eye = target
 
-
-/obj/item/weapon/syntiflesh
-	name = "syntiflesh"
-	desc = "Meat that appears...strange..."
-	icon = 'icons/obj/food.dmi'
-	icon_state = "meat"
-	flags = FPRINT | TABLEPASS | CONDUCT
-	w_class = 2.0
-	origin_tech = "biotech=2"
-
-/obj/item/weapon/hatchet
-	name = "hatchet"
-	desc = "A very sharp axe blade upon a short fibremetal handle. It has a long history of chopping things, but now it is used for chopping wood."
-	icon = 'icons/obj/weapons.dmi'
-	icon_state = "hatchet"
-	flags = FPRINT | TABLEPASS | CONDUCT
-	force = 12.0
-	w_class = 2.0
-	throwforce = 15.0
-	throw_speed = 4
-	throw_range = 4
-	m_amt = 15000
-	origin_tech = "materials=2;combat=1"
-	attack_verb = list("chopped", "torn", "cut")
-
-/obj/item/weapon/hatchet/attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob)
-	playsound(loc, 'sound/weapons/bladeslice.ogg', 50, 1, -1)
-	return ..()
-
-/obj/item/weapon/hatchet/unathiknife
-	name = "duelling knife"
-	desc = "A length of leather-bound wood studded with razor-sharp teeth. How crude."
-	icon = 'icons/obj/weapons.dmi'
-	icon_state = "unathiknife"
-	attack_verb = list("ripped", "torn", "cut")
-
-/obj/item/weapon/scythe
-	icon_state = "scythe0"
-	name = "scythe"
-	desc = "A sharp and curved blade on a long fibremetal handle, this tool makes it easy to reap what you sow."
-	force = 13.0
-	throwforce = 5.0
-	throw_speed = 1
-	throw_range = 3
-	w_class = 4.0
-	flags = FPRINT | TABLEPASS | NOSHIELD
-	slot_flags = SLOT_BACK
-	origin_tech = "materials=2;combat=2"
-	attack_verb = list("chopped", "sliced", "cut", "reaped")
-
-/obj/item/weapon/scythe/afterattack(atom/A, mob/user as mob, proximity)
-	if(!proximity) return
-	if(istype(A, /obj/effect/spacevine))
-		for(var/obj/effect/spacevine/B in orange(A,1))
-			if(prob(80))
-				del B
-		del A
-
 /*
 /obj/item/weapon/cigarpacket
 	name = "Pete's Cuban Cigars"
@@ -522,7 +411,7 @@
 	w_class = 1
 	throwforce = 2
 	var/cigarcount = 6
-	flags = ONBELT | TABLEPASS */
+	flags = ONBELT */
 
 /obj/item/weapon/pai_cable
 	desc = "A flexible coated cable with a universal jack on one end."
@@ -532,20 +421,23 @@
 
 	var/obj/machinery/machine
 
-/obj/item/weapon/plastique
-	name = "plastic explosives"
-	desc = "Used to put holes in specific areas without too much extra hole."
-	gender = PLURAL
-	icon = 'icons/obj/assemblies.dmi'
-	icon_state = "plastic-explosive0"
-	item_state = "plasticx"
-	flags = FPRINT | TABLEPASS | NOBLUDGEON
-	w_class = 2.0
-	origin_tech = "syndicate=2"
-	var/timer = 10
-	var/atom/target = null
-
 ///////////////////////////////////////Stock Parts /////////////////////////////////
+
+/obj/item/weapon/storage/part_replacer
+	name = "rapid part exchange device"
+	desc = "Special mechanical module made to store, sort, and apply standard machine parts."
+	icon_state = "RPED"
+	item_state = "RPED"
+	w_class = 5
+	can_hold = list(/obj/item/weapon/stock_parts)
+	storage_slots = 50
+	use_to_pickup = 1
+	allow_quick_gather = 1
+	allow_quick_empty = 1
+	collection_mode = 1
+	display_contents_with_number = 1
+	max_w_class = 3
+	max_combined_w_class = 100
 
 /obj/item/weapon/stock_parts
 	name = "stock part"
@@ -565,45 +457,42 @@
 	desc = "Used in the construction of computers and other devices with a interactive console."
 	icon_state = "screen"
 	origin_tech = "materials=1"
-	g_amt = 200
+	matter = list("glass" = 200)
 
 /obj/item/weapon/stock_parts/capacitor
 	name = "capacitor"
 	desc = "A basic capacitor used in the construction of a variety of devices."
 	icon_state = "capacitor"
 	origin_tech = "powerstorage=1"
-	m_amt = 50
-	g_amt = 50
+	matter = list("metal" = 50,"glass" = 50)
 
 /obj/item/weapon/stock_parts/scanning_module
 	name = "scanning module"
 	desc = "A compact, high resolution scanning module used in the construction of certain devices."
 	icon_state = "scan_module"
 	origin_tech = "magnets=1"
-	m_amt = 50
-	g_amt = 20
+	matter = list("metal" = 50,"glass" = 20)
 
 /obj/item/weapon/stock_parts/manipulator
 	name = "micro-manipulator"
 	desc = "A tiny little manipulator used in the construction of certain devices."
 	icon_state = "micro_mani"
 	origin_tech = "materials=1;programming=1"
-	m_amt = 30
+	matter = list("metal" = 30)
 
 /obj/item/weapon/stock_parts/micro_laser
 	name = "micro-laser"
 	desc = "A tiny laser used in certain devices."
 	icon_state = "micro_laser"
 	origin_tech = "magnets=1"
-	m_amt = 10
-	g_amt = 20
+	matter = list("metal" = 10,"glass" = 20)
 
 /obj/item/weapon/stock_parts/matter_bin
 	name = "matter bin"
 	desc = "A container for hold compressed matter awaiting re-construction."
 	icon_state = "matter_bin"
 	origin_tech = "materials=1"
-	m_amt = 80
+	matter = list("metal" = 80)
 
 //Rank 2
 
@@ -612,8 +501,7 @@
 	desc = "An advanced capacitor used in the construction of a variety of devices."
 	origin_tech = "powerstorage=3"
 	rating = 2
-	m_amt = 50
-	g_amt = 50
+	matter = list("metal" = 50,"glass" = 50)
 
 /obj/item/weapon/stock_parts/scanning_module/adv
 	name = "advanced scanning module"
@@ -621,8 +509,7 @@
 	icon_state = "scan_module"
 	origin_tech = "magnets=3"
 	rating = 2
-	m_amt = 50
-	g_amt = 20
+	matter = list("metal" = 50,"glass" = 20)
 
 /obj/item/weapon/stock_parts/manipulator/nano
 	name = "nano-manipulator"
@@ -630,7 +517,7 @@
 	icon_state = "nano_mani"
 	origin_tech = "materials=3,programming=2"
 	rating = 2
-	m_amt = 30
+	matter = list("metal" = 30)
 
 /obj/item/weapon/stock_parts/micro_laser/high
 	name = "high-power micro-laser"
@@ -638,8 +525,7 @@
 	icon_state = "high_micro_laser"
 	origin_tech = "magnets=3"
 	rating = 2
-	m_amt = 10
-	g_amt = 20
+	matter = list("metal" = 10,"glass" = 20)
 
 /obj/item/weapon/stock_parts/matter_bin/adv
 	name = "advanced matter bin"
@@ -647,7 +533,7 @@
 	icon_state = "advanced_matter_bin"
 	origin_tech = "materials=3"
 	rating = 2
-	m_amt = 80
+	matter = list("metal" = 80)
 
 //Rating 3
 
@@ -656,16 +542,14 @@
 	desc = "A super-high capacity capacitor used in the construction of a variety of devices."
 	origin_tech = "powerstorage=5;materials=4"
 	rating = 3
-	m_amt = 50
-	g_amt = 50
+	matter = list("metal" = 50,"glass" = 50)
 
 /obj/item/weapon/stock_parts/scanning_module/phasic
 	name = "phasic scanning module"
 	desc = "A compact, high resolution phasic scanning module used in the construction of certain devices."
 	origin_tech = "magnets=5"
 	rating = 3
-	m_amt = 50
-	g_amt = 20
+	matter = list("metal" = 50,"glass" = 20)
 
 /obj/item/weapon/stock_parts/manipulator/pico
 	name = "pico-manipulator"
@@ -673,7 +557,7 @@
 	icon_state = "pico_mani"
 	origin_tech = "materials=5,programming=2"
 	rating = 3
-	m_amt = 30
+	matter = list("metal" = 30)
 
 /obj/item/weapon/stock_parts/micro_laser/ultra
 	name = "ultra-high-power micro-laser"
@@ -681,8 +565,7 @@
 	desc = "A tiny laser used in certain devices."
 	origin_tech = "magnets=5"
 	rating = 3
-	m_amt = 10
-	g_amt = 20
+	matter = list("metal" = 10,"glass" = 20)
 
 /obj/item/weapon/stock_parts/matter_bin/super
 	name = "super matter bin"
@@ -690,7 +573,7 @@
 	icon_state = "super_matter_bin"
 	origin_tech = "materials=5"
 	rating = 3
-	m_amt = 80
+	matter = list("metal" = 80)
 
 // Subspace stock parts
 
@@ -699,54 +582,49 @@
 	icon_state = "subspace_ansible"
 	desc = "A compact module capable of sensing extradimensional activity."
 	origin_tech = "programming=3;magnets=5;materials=4;bluespace=2"
-	m_amt = 30
-	g_amt = 10
+	matter = list("metal" = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/filter
 	name = "hyperwave filter"
 	icon_state = "hyperwave_filter"
 	desc = "A tiny device capable of filtering and converting super-intense radiowaves."
 	origin_tech = "programming=4;magnets=2"
-	m_amt = 30
-	g_amt = 10
+	matter = list("metal" = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/amplifier
 	name = "subspace amplifier"
 	icon_state = "subspace_amplifier"
 	desc = "A compact micro-machine capable of amplifying weak subspace transmissions."
 	origin_tech = "programming=3;magnets=4;materials=4;bluespace=2"
-	m_amt = 30
-	g_amt = 10
+	matter = list("metal" = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/treatment
 	name = "subspace treatment disk"
 	icon_state = "treatment_disk"
 	desc = "A compact micro-machine capable of stretching out hyper-compressed radio waves."
 	origin_tech = "programming=3;magnets=2;materials=5;bluespace=2"
-	m_amt = 30
-	g_amt = 10
+	matter = list("metal" = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/analyzer
 	name = "subspace wavelength analyzer"
 	icon_state = "wavelength_analyzer"
 	desc = "A sophisticated analyzer capable of analyzing cryptic subspace wavelengths."
 	origin_tech = "programming=3;magnets=4;materials=4;bluespace=2"
-	m_amt = 30
-	g_amt = 10
+	matter = list("metal" = 30,"glass" = 10)
 
 /obj/item/weapon/stock_parts/subspace/crystal
 	name = "ansible crystal"
 	icon_state = "ansible_crystal"
 	desc = "A crystal made from pure glass used to transmit laser databursts to subspace."
 	origin_tech = "magnets=4;materials=4;bluespace=2"
-	g_amt = 50
+	matter = list("glass" = 50)
 
 /obj/item/weapon/stock_parts/subspace/transmitter
 	name = "subspace transmitter"
 	icon_state = "subspace_transmitter"
 	desc = "A large piece of equipment used to open a window into the subspace dimension."
 	origin_tech = "magnets=5;materials=5;bluespace=3"
-	m_amt = 50
+	matter = list("metal" = 50)
 
 /obj/item/weapon/ectoplasm
 	name = "ectoplasm"
@@ -755,9 +633,9 @@
 	icon = 'icons/obj/wizard.dmi'
 	icon_state = "ectoplasm"
 
-/obj/item/weapon/research//Makes testing much less of a pain -Sieve
-	name = "research"
+/obj/item/weapon/research
+	name = "research debugging device"
+	desc = "Instant research tool. For testing purposes only."
 	icon = 'icons/obj/stock_parts.dmi'
-	icon_state = "capacitor"
-	desc = "A debug item for research."
-	origin_tech = "materials=8;programming=8;magnets=8;powerstorage=8;bluespace=8;combat=8;biotech=8;syndicate=8"
+	icon_state = "smes_coil"
+	origin_tech = "materials=19;programming=19;magnets=19;powerstorage=19;bluespace=19;combat=19;biotech=19;syndicate=19;phorontech=19;engineering=19"

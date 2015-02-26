@@ -25,6 +25,7 @@ var/const/VIROLOGIST		=(1<<6)
 var/const/PSYCHIATRIST		=(1<<7)
 var/const/ROBOTICIST		=(1<<8)
 var/const/XENOBIOLOGIST		=(1<<9)
+var/const/PARAMEDIC			=(1<<10)
 
 
 var/const/CIVILIAN			=(1<<2)
@@ -87,7 +88,7 @@ var/list/science_positions = list(
 var/list/civilian_positions = list(
 	"Head of Personnel",
 	"Bartender",
-	"Botanist",
+	"Gardener",
 	"Chef",
 	"Janitor",
 	"Librarian",
@@ -134,9 +135,7 @@ var/list/nonhuman_positions = list(
 	var/list/titles = list()
 
 	for(var/datum/job/J in jobs)
-		if(!J)	continue
 		if(J.title == job)
 			titles = J.alt_titles
 
 	return titles
-

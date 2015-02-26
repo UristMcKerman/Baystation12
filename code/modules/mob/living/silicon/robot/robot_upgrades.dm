@@ -34,6 +34,8 @@
 	R.base_icon = "robot"
 	R.icon_state = "robot"
 	R.updateicon()
+	R.languages = list()
+	R.speech_synthesizer_langs = list()
 
 	return 1
 
@@ -106,7 +108,7 @@
 		usr << "There's no mounting point for the module!"
 		return 0
 
-	var/obj/item/weapon/gun/energy/taser/cyborg/T = locate() in R.module
+	var/obj/item/weapon/gun/energy/taser/mounted/cyborg/T = locate() in R.module
 	if(!T)
 		T = locate() in R.module.contents
 	if(!T)

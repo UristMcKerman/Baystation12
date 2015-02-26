@@ -4,6 +4,7 @@ datum
 		var/name = null
 		var/id = null
 		var/result = null
+		var/resultcolor = null //for paint
 		var/list/required_reagents = new/list()
 		var/list/required_catalysts = new/list()
 
@@ -55,16 +56,16 @@ datum
 				empulse(location, round(created_volume / 24), round(created_volume / 14), 1)
 				holder.clear_reagents()
 				return
-/*
+
 		silicate
 			name = "Silicate"
 			id = "silicate"
 			result = "silicate"
 			required_reagents = list("aluminum" = 1, "silicon" = 1, "oxygen" = 1)
 			result_amount = 3
-*/
+
 		stoxin
-			name = "Sleep Toxin"
+			name = "Soporific"
 			id = "stoxin"
 			result = "stoxin"
 			required_reagents = list("chloralhydrate" = 1, "sugar" = 4)
@@ -85,7 +86,7 @@ datum
 			result_amount = 3
 
 		anti_toxin
-			name = "Anti-Toxin (Dylovene)"
+			name = "Dylovene"
 			id = "anti_toxin"
 			result = "anti_toxin"
 			required_reagents = list("silicon" = 1, "potassium" = 1, "nitrogen" = 1)
@@ -130,8 +131,8 @@ datum
 		water //I can't believe we never had this.
 			name = "Water"
 			id = "water"
-			result = null
-			required_reagents = list("oxygen" = 2, "hydrogen" = 1)
+			result = "water"
+			required_reagents = list("oxygen" = 1, "hydrogen" = 2)
 			result_amount = 1
 
 		thermite
@@ -406,16 +407,7 @@ datum
 			on_reaction(var/datum/reagents/holder, var/created_volume)
 				var/turf/location = get_turf(holder.my_atom.loc)
 				for(var/turf/simulated/floor/target_tile in range(0,location))
-
-					var/datum/gas_mixture/napalm = new
-					var/datum/gas/volatile_fuel/fuel = new
-					fuel.moles = created_volume
-					napalm.trace_gases += fuel
-
-					napalm.temperature = 400+T0C
-					napalm.update_values()
-
-					target_tile.assume_air(napalm)
+					target_tile.assume_gas("volatile_fuel", created_volume, 400+T0C)
 					spawn (0) target_tile.hotspot_expose(700, 400)
 				holder.del_reagent("napalm")
 				return
@@ -487,7 +479,7 @@ datum
 			result_amount = 4
 
 		stoxin
-			name = "Sleep Toxin"
+			name = "Soporific"
 			id = "stoxin"
 			result = "stoxin"
 			required_reagents = list("chloralhydrate" = 1, "sugar" = 4)
@@ -594,6 +586,14 @@ datum
 			required_reagents = list("capsaicin" = 2)
 			required_catalysts = list("phoron" = 5)
 			result_amount = 1
+
+		ketchup
+			name = "Ketchup"
+			id = "ketchup"
+			result = "ketchup"
+			required_reagents = list("tomatojuice" = 2, "water" = 1, "sugar" = 1)
+			result_amount = 4
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 // foam and foam precursor
@@ -841,8 +841,8 @@ datum
 				if(chosen)
 				// Calculate previous position for transition
 
-					var/turf/FROM = get_turf_loc(holder.my_atom) // the turf of origin we're travelling FROM
-					var/turf/TO = get_turf_loc(chosen)			 // the turf of origin we're travelling TO
+					var/turf/FROM = get_turf(holder.my_atom) // the turf of origin we're travelling FROM
+					var/turf/TO = get_turf(chosen)			 // the turf of origin we're travelling TO
 
 					playsound(TO, 'sound/effects/phasein.ogg', 100, 1)
 
@@ -903,16 +903,16 @@ datum
 					)//exclusion list for things you don't want the reaction to create.
 				var/list/critters = typesof(/mob/living/simple_animal/hostile) - blocked // list of possible hostile mobs
 
-				playsound(get_turf_loc(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
+				playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 
-				for(var/mob/living/carbon/human/M in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/living/carbon/human/M in viewers(get_turf(holder.my_atom), null))
 					if(M:eyecheck() <= 0)
 						flick("e_flash", M.flash)
 
 				for(var/i = 1, i <= created_volume, i++)
 					var/chosen = pick(critters)
 					var/mob/living/simple_animal/hostile/C = new chosen
-					C.loc = get_turf_loc(holder.my_atom)
+					C.loc = get_turf(holder.my_atom)
 					if(prob(50))
 						for(var/j = 1, j <= rand(1, 3), j++)
 							step(C, pick(NORTH,SOUTH,EAST,WEST))
@@ -929,9 +929,9 @@ datum
 				var/list/borks = typesof(/obj/item/weapon/reagent_containers/food/snacks) - /obj/item/weapon/reagent_containers/food/snacks
 				// BORK BORK BORK
 
-				playsound(get_turf_loc(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
+				playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 
-				for(var/mob/living/carbon/human/M in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/living/carbon/human/M in viewers(get_turf(holder.my_atom), null))
 					if(M:eyecheck() <= 0)
 						flick("e_flash", M.flash)
 
@@ -939,7 +939,7 @@ datum
 					var/chosen = pick(borks)
 					var/obj/B = new chosen
 					if(B)
-						B.loc = get_turf_loc(holder.my_atom)
+						B.loc = get_turf(holder.my_atom)
 						if(prob(50))
 							for(var/j = 1, j <= rand(1, 3), j++)
 								step(B, pick(NORTH,SOUTH,EAST,WEST))
@@ -1009,10 +1009,10 @@ datum
 			required_container = /obj/item/slime_extract/grey
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red Infused with phoron, the core begins to quiver and grow, and soon a new baby slime emerges from it!"), 1)
 				var/mob/living/carbon/slime/S = new /mob/living/carbon/slime
-				S.loc = get_turf_loc(holder.my_atom)
+				S.loc = get_turf(holder.my_atom)
 
 
 		slimemonkey
@@ -1026,7 +1026,7 @@ datum
 			on_reaction(var/datum/reagents/holder)
 				for(var/i = 1, i <= 3, i++)
 					var /obj/item/weapon/reagent_containers/food/snacks/monkeycube/M = new /obj/item/weapon/reagent_containers/food/snacks/monkeycube
-					M.loc = get_turf_loc(holder.my_atom)
+					M.loc = get_turf(holder.my_atom)
 
 //Green
 		slimemutate
@@ -1050,10 +1050,10 @@ datum
 			on_reaction(var/datum/reagents/holder)
 				var/obj/item/stack/sheet/metal/M = new /obj/item/stack/sheet/metal
 				M.amount = 15
-				M.loc = get_turf_loc(holder.my_atom)
+				M.loc = get_turf(holder.my_atom)
 				var/obj/item/stack/sheet/plasteel/P = new /obj/item/stack/sheet/plasteel
 				P.amount = 5
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 
 //Gold
 		slimecrit
@@ -1085,9 +1085,9 @@ datum
 					)//exclusion list for things you don't want the reaction to create.
 				var/list/critters = typesof(/mob/living/simple_animal/hostile) - blocked // list of possible hostile mobs
 
-				playsound(get_turf_loc(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
+				playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 
-				for(var/mob/living/carbon/human/M in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/living/carbon/human/M in viewers(get_turf(holder.my_atom), null))
 					if(M:eyecheck() <= 0)
 						flick("e_flash", M.flash)
 
@@ -1095,11 +1095,11 @@ datum
 					var/chosen = pick(critters)
 					var/mob/living/simple_animal/hostile/C = new chosen
 					C.faction = "slimesummon"
-					C.loc = get_turf_loc(holder.my_atom)
+					C.loc = get_turf(holder.my_atom)
 					if(prob(50))
 						for(var/j = 1, j <= rand(1, 3), j++)
 							step(C, pick(NORTH,SOUTH,EAST,WEST))*/
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red The slime core fizzles disappointingly,"), 1)
 
 //Silver
@@ -1116,9 +1116,9 @@ datum
 				var/list/borks = typesof(/obj/item/weapon/reagent_containers/food/snacks) - /obj/item/weapon/reagent_containers/food/snacks
 				// BORK BORK BORK
 
-				playsound(get_turf_loc(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
+				playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
 
-				for(var/mob/living/carbon/human/M in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/living/carbon/human/M in viewers(get_turf(holder.my_atom), null))
 					if(M:eyecheck() <= 0)
 						flick("e_flash", M.flash)
 
@@ -1126,7 +1126,7 @@ datum
 					var/chosen = pick(borks)
 					var/obj/B = new chosen
 					if(B)
-						B.loc = get_turf_loc(holder.my_atom)
+						B.loc = get_turf(holder.my_atom)
 						if(prob(50))
 							for(var/j = 1, j <= rand(1, 3), j++)
 								step(B, pick(NORTH,SOUTH,EAST,WEST))
@@ -1151,11 +1151,11 @@ datum
 			required_container = /obj/item/slime_extract/darkblue
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red The slime extract begins to vibrate violently !"), 1)
 				sleep(50)
-				playsound(get_turf_loc(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
-				for(var/mob/living/M in range (get_turf_loc(holder.my_atom), 7))
+				playsound(get_turf(holder.my_atom), 'sound/effects/phasein.ogg', 100, 1)
+				for(var/mob/living/M in range (get_turf(holder.my_atom), 7))
 					M.bodytemperature -= 140
 					M << "\blue You feel a chill!"
 
@@ -1178,18 +1178,12 @@ datum
 			required_container = /obj/item/slime_extract/orange
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red The slime extract begins to vibrate violently !"), 1)
 				sleep(50)
 				var/turf/location = get_turf(holder.my_atom.loc)
 				for(var/turf/simulated/floor/target_tile in range(0,location))
-
-					var/datum/gas_mixture/napalm = new
-
-					napalm.phoron = 25
-					napalm.temperature = 1400
-
-					target_tile.assume_air(napalm)
+					target_tile.assume_gas("phoron", 25, 1400)
 					spawn (0) target_tile.hotspot_expose(700, 400)
 
 //Yellow
@@ -1202,7 +1196,7 @@ datum
 			required_container = /obj/item/slime_extract/yellow
 			required_other = 1
 			on_reaction(var/datum/reagents/holder, var/created_volume)
-				empulse(get_turf_loc(holder.my_atom), 3, 7)
+				empulse(get_turf(holder.my_atom), 3, 7)
 
 
 		slimecell
@@ -1215,7 +1209,7 @@ datum
 			required_other = 1
 			on_reaction(var/datum/reagents/holder, var/created_volume)
 				var/obj/item/weapon/cell/slime/P = new /obj/item/weapon/cell/slime
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 
 		slimeglow
 			name = "Slime Glow"
@@ -1226,11 +1220,11 @@ datum
 			required_container = /obj/item/slime_extract/yellow
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red The contents of the slime core harden and begin to emit a warm, bright light."), 1)
 				var/obj/item/device/flashlight/slime/F = new /obj/item/device/flashlight/slime
 				F.loc = get_turf(holder.my_atom)
-			
+
 //Purple
 
 		slimepsteroid
@@ -1243,7 +1237,7 @@ datum
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
 				var/obj/item/weapon/slimesteroid/P = new /obj/item/weapon/slimesteroid
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 
 
 
@@ -1269,7 +1263,7 @@ datum
 			on_reaction(var/datum/reagents/holder)
 				var/obj/item/stack/sheet/mineral/phoron/P = new /obj/item/stack/sheet/mineral/phoron
 				P.amount = 10
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 
 //Red
 		slimeglycerol
@@ -1291,11 +1285,10 @@ datum
 			required_container = /obj/item/slime_extract/red
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/living/carbon/slime/slime in viewers(get_turf_loc(holder.my_atom), null))
-					slime.tame = 0
+				for(var/mob/living/carbon/slime/slime in viewers(get_turf(holder.my_atom), null))
 					slime.rabid = 1
-					for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
-						O.show_message(text("\red The [slime] is driven into a frenzy!."), 1)
+					for(var/mob/O in viewers(get_turf(holder.my_atom), null))
+						O.show_message(text("\red The [slime] is driven into a frenzy!"), 1)
 
 //Pink
 		slimeppotion
@@ -1308,7 +1301,7 @@ datum
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
 				var/obj/item/weapon/slimepotion/P = new /obj/item/weapon/slimepotion
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 
 
 //Black
@@ -1331,10 +1324,10 @@ datum
 			required_container = /obj/item/slime_extract/oil
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
-				for(var/mob/O in viewers(get_turf_loc(holder.my_atom), null))
+				for(var/mob/O in viewers(get_turf(holder.my_atom), null))
 					O.show_message(text("\red The slime extract begins to vibrate violently !"), 1)
 				sleep(50)
-				explosion(get_turf_loc(holder.my_atom), 1 ,3, 6)
+				explosion(get_turf(holder.my_atom), 1 ,3, 6)
 //Light Pink
 		slimepotion2
 			name = "Slime Potion 2"
@@ -1346,7 +1339,7 @@ datum
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
 				var/obj/item/weapon/slimepotion2/P = new /obj/item/weapon/slimepotion2
-				P.loc = get_turf_loc(holder.my_atom)
+				P.loc = get_turf(holder.my_atom)
 //Adamantine
 		slimegolem
 			name = "Slime Golem"
@@ -1358,8 +1351,202 @@ datum
 			required_other = 1
 			on_reaction(var/datum/reagents/holder)
 				var/obj/effect/golemrune/Z = new /obj/effect/golemrune
-				Z.loc = get_turf_loc(holder.my_atom)
+				Z.loc = get_turf(holder.my_atom)
 				Z.announce_to_ghosts()
+
+//////////////////////////////////////////PAINT///////////////////////////////////////////
+//Crayon dust -> paint
+		red_paint
+			name = "Red paint"
+			id = "red_paint"
+			result = "paint"
+			resultcolor = "#FE191A"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_red" = 1)
+			result_amount = 5
+
+		orange_paint
+			name = "Orange paint"
+			id = "orange_paint"
+			result = "paint"
+			resultcolor = "#FFBE4F"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_orange" = 1)
+			result_amount = 5
+
+		yellow_paint
+			name = "Yellow paint"
+			id = "yellow_paint"
+			result = "paint"
+			resultcolor = "#FDFE7D"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_yellow" = 1)
+			result_amount = 5
+
+		green_paint
+			name = "Green paint"
+			id = "green_paint"
+			result = "paint"
+			resultcolor = "#18A31A"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_green" = 1)
+			result_amount = 5
+
+		blue_paint
+			name = "Blue paint"
+			id = "blue_paint"
+			result = "paint"
+			resultcolor = "#247CFF"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_blue" = 1)
+			result_amount = 5
+
+		purple_paint
+			name = "Purple paint"
+			id = "purple_paint"
+			result = "paint"
+			resultcolor = "#CC0099"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_purple" = 1)
+			result_amount = 5
+
+		grey_paint //mime
+			name = "Grey paint"
+			id = "grey_paint"
+			result = "paint"
+			resultcolor = "#808080"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_grey" = 1)
+			result_amount = 5
+
+		brown_paint
+			name = "Brown paint"
+			id = "brown_paint"
+			result = "paint"
+			resultcolor = "#846F35"
+			required_reagents = list("plasticide" = 1, "water" = 3, "crayon_dust_brown" = 1)
+			result_amount = 5
+
+//Ghetto reactions
+
+/* Ideally the paint should take on the blood's colour (for each of the species)
+        but I could not think of a way. - RKF
+
+		blood_paint
+			name = "Blood paint"
+			id = "blood_paint"
+			result = "paint"
+			resultcolor = "#C80000"
+			required_reagents = list("plasticide" = 1, "water" = 3, "blood" = 2)
+			result_amount = 5
+*/
+		milk_paint
+			name = "Milk paint"
+			id = "milk_paint"
+			result = "paint"
+			resultcolor = "#F0F8FF"
+			required_reagents = list("plasticide" = 1, "water" = 3, "milk" = 5)
+			result_amount = 5
+
+		orange_juice_paint
+			name = "Orange juice paint"
+			id = "orange_juice_paint"
+			result = "paint"
+			resultcolor = "#E78108"
+			required_reagents = list("plasticide" = 1, "water" = 3, "orangejuice" = 5)
+			result_amount = 5
+
+		tomato_juice_paint
+			name = "Tomato juice paint"
+			id = "tomato_juice_paint"
+			result = "paint"
+			resultcolor = "#731008"
+			required_reagents = list("plasticide" = 1, "water" = 3, "tomatojuice" = 5)
+			result_amount = 5
+
+		lime_juice_paint
+			name = "Lime juice paint"
+			id = "lime_juice_paint"
+			result = "paint"
+			resultcolor = "#365E30"
+			required_reagents = list("plasticide" = 1, "water" = 3, "limejuice" = 5)
+			result_amount = 5
+
+		carrot_juice_paint
+			name = "Carrot juice paint"
+			id = "carrot_juice_paint"
+			result = "paint"
+			resultcolor = "#973800"
+			required_reagents = list("plasticide" = 1, "water" = 3, "carrotjuice" = 5)
+			result_amount = 5
+
+		berry_juice_paint
+			name = "Berry juice paint"
+			id = "berry_juice_paint"
+			result = "paint"
+			resultcolor = "#990066"
+			required_reagents = list("plasticide" = 1, "water" = 3, "berryjuice" = 5)
+			result_amount = 5
+
+		grape_juice_paint
+			name = "Grape juice paint"
+			id = "grape_juice_paint"
+			result = "paint"
+			resultcolor = "#863333"
+			required_reagents = list("plasticide" = 1, "water" = 3, "grapejuice" = 5)
+			result_amount = 5
+
+		poisonberry_juice_paint
+			name = "Poison berry juice paint"
+			id = "poisonberry_juice_paint"
+			result = "paint"
+			resultcolor = "#863353"
+			required_reagents = list("plasticide" = 1, "water" = 3, "poisonberryjuice" = 5)
+			result_amount = 5
+
+		watermelon_juice_paint
+			name = "Watermelon juice paint"
+			id = "watermelon_juice_paint"
+			result = "paint"
+			resultcolor = "#B83333"
+			required_reagents = list("plasticide" = 1, "water" = 3, "watermelonjuice" = 5)
+			result_amount = 5
+
+		lemon_juice_paint
+			name = "Lemon juice paint"
+			id = "lemon_juice_paint"
+			result = "paint"
+			resultcolor = "#AFAF00"
+			required_reagents = list("plasticide" = 1, "water" = 3, "lemonjuice" = 5)
+			result_amount = 5
+
+		banana_juice_paint
+			name = "Banana juice paint"
+			id = "banana_juice_paint"
+			result = "paint"
+			resultcolor = "#C3AF00"
+			required_reagents = list("plasticide" = 1, "water" = 3, "banana" = 5)
+			result_amount = 5
+
+		potato_juice_paint
+			name = "Potato juice paint"
+			id = "potato_juice_paint"
+			result = "paint"
+			resultcolor = "#302000"
+			required_reagents = list("plasticide" = 1, "water" = 3, "potatojuice" = 5)
+			result_amount = 5
+
+//Other paint
+
+		carbon_paint
+			name = "Carbon paint"
+			id = "carbon_paint"
+			result = "paint"
+			resultcolor = "#333333"
+			required_reagents = list("plasticide" = 1, "water" = 3, "carbon" = 1)
+			result_amount = 5
+
+		aluminum_paint
+			name = "Aluminum paint"
+			id = "aluminum_paint"
+			result = "paint"
+			resultcolor = "#F0F8FF"
+			required_reagents = list("plasticide" = 1, "water" = 3, "aluminum" = 1)
+			result_amount = 5
+
 //////////////////////////////////////////FOOD MIXTURES////////////////////////////////////
 
 		tofu
@@ -1423,6 +1610,26 @@ datum
 			on_reaction(var/datum/reagents/holder, var/created_volume)
 				var/location = get_turf(holder.my_atom)
 				new /obj/item/weapon/reagent_containers/food/snacks/sliceable/cheesewheel(location)
+				return
+
+		meatball
+			name = "Meatball"
+			id = "meatball"
+			result = null
+			required_reagents = list("protein" = 3, "flour" = 5)
+			result_amount = 3
+			on_reaction(var/datum/reagents/holder, var/created_volume)
+				new /obj/item/weapon/reagent_containers/food/snacks/meatball(get_turf(holder.my_atom))
+				return
+
+		dough
+			name = "Dough"
+			id = "dough"
+			result = null
+			required_reagents = list("egg" = 3, "flour" = 10)
+			result_amount = 1
+			on_reaction(var/datum/reagents/holder, var/created_volume)
+				new /obj/item/weapon/reagent_containers/food/snacks/dough(get_turf(holder.my_atom))
 				return
 
 		syntiflesh

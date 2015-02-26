@@ -20,6 +20,7 @@
 	icon = 'icons/obj/xenoarchaeology.dmi'
 	icon_state = "sliver1"	//0-4
 	w_class = 1
+	sharp = 1
 	//item_state = "electronic"
 	var/source_rock = "/turf/simulated/mineral/"
 	var/datum/geosample/geological_data
@@ -28,6 +29,8 @@
 	icon_state = "sliver[rand(1,3)]"
 	pixel_x = rand(0,16)-8
 	pixel_y = rand(0,8)-8
+	create_reagents(50)
+	reagents.add_reagent("ground_rock",50)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Geosample datum
